@@ -7,8 +7,6 @@ import java.util.HashMap;
 @Data
 @MetaType("queue")
 public class Queue extends Meta {
-
-    private String vhost;
     
     private Boolean durable;
     

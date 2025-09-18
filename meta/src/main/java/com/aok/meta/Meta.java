@@ -1,18 +1,14 @@
 package com.aok.meta;
 
+import lombok.Data;
 import org.apache.kafka.common.Uuid;
 
 import java.io.Serializable;
 
-
+@Data
 public class Meta implements Serializable {
-    private String uuid;
 
-    public Uuid getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(Uuid uuid) {
-        this.uuid = uuid;
-    }
+    private String vhost;
+    
+    private String name;
 }

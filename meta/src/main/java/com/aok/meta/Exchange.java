@@ -8,8 +8,6 @@ import java.util.HashMap;
 @MetaType("exchange")
 public class Exchange extends Meta {
 
-    private String vhost;
-
     private ExchangeType type;
 
     private Boolean durable;

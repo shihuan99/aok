@@ -1,54 +1,45 @@
 package com.aok.meta.container;
 
 import com.aok.meta.Meta;
-import org.apache.kafka.common.Uuid;
+import com.aok.meta.MetaKey;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InMemoryMetaContainer implements MetaContainer<Meta> {
 
-    private final Map<String, Map<Uuid, Meta>> metaMap = new HashMap<>();
+    private final Map<MetaKey, Meta> map = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void add(Meta meta) {
         String type = getMetaType(meta);
-        Uuid uuid = Uuid.randomUuid();
-        meta.setUuid(uuid);
-        me
+        MetaKey key = new MetaKey(type, meta.getVhost(), meta.getName());
+        map.put(key, meta);
     }
 
     @Override
     public synchronized void remove(Meta meta) {
-        List<Meta> list = metaMap.get(meta.getClass());
-        if (list != null) {
-            list.remove(meta);
-            if (list.isEmpty()) {
-                metaMap.remove(meta.getClass());
-            }
-        }
+        String type = getMetaType(meta);
+        MetaKey key = new MetaKey(type, meta.getVhost(), meta.getName());
+        map.remove(key);
+    }
+
+    public Meta getMeta(String type, String vhost, String name) {
+        MetaKey key = new MetaKey(type, vhost, name);
+        return map.get(key);
     }
 
     @Override
     public List<Meta> list() {
-        List<Meta> all = new ArrayList<>();
-        for (List<Meta> metas : metaMap.values()) {
-            all.addAll(metas);
-        }
-        return all;
+        return new ArrayList<>(map.values());
     }
 
     @Override
     public synchronized void update(Meta meta) {
-        List<Meta> list = metaMap.get(meta.getClass());
-        if (list != null) {
-            int idx = list.indexOf(meta);
-            if (idx != -1) {
-                list.set(idx, meta);
-            }
-        }
-    }
-    
-    public List<Meta> listByType(Class<? extends Meta> type) {
-        return new ArrayList<>(metaMap.getOrDefault(type, Collections.emptyList()));
+        String type = getMetaType(meta);
+        MetaKey key = new MetaKey(type, meta.getVhost(), meta.getName());
+        map.put(key, meta);
     }
 }

@@ -17,31 +17,60 @@
 package com.aok.core;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.qpid.server.bytebuffer.QpidByteBuffer;
 import org.apache.qpid.server.protocol.ProtocolVersion;
 import org.apache.qpid.server.protocol.v0_8.AMQFrameDecodingException;
 import org.apache.qpid.server.protocol.v0_8.AMQShortString;
 import org.apache.qpid.server.protocol.v0_8.FieldTable;
+import org.apache.qpid.server.protocol.v0_8.transport.AMQDataBlock;
+import org.apache.qpid.server.protocol.v0_8.transport.AMQMethodBody;
+import org.apache.qpid.server.protocol.v0_8.transport.AMQProtocolHeaderException;
+import org.apache.qpid.server.protocol.v0_8.transport.ChannelOpenOkBody;
+import org.apache.qpid.server.protocol.v0_8.transport.ConnectionTuneBody;
+import org.apache.qpid.server.protocol.v0_8.transport.MethodRegistry;
 import org.apache.qpid.server.protocol.v0_8.transport.ProtocolInitiation;
 import org.apache.qpid.server.protocol.v0_8.transport.ServerChannelMethodProcessor;
 import org.apache.qpid.server.protocol.v0_8.transport.ServerMethodProcessor;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
+@Slf4j
 public class AmqpConnection extends AmqpCommandDecoder implements ServerMethodProcessor<ServerChannelMethodProcessor> {
 
-    protected AmqpBrokerDecoder brokerDecoder;
+    private AmqpBrokerDecoder brokerDecoder;
+    
+    private AmqpChannel amqpChannel;
+    
+    private ConcurrentHashMap<Integer, AmqpChannel> channels = new ConcurrentHashMap<>();
+
+    private final MethodRegistry registry = new MethodRegistry(AmqpConstants.PROTOCOL_VERSION);
+
+    private volatile int currentClassId;
+
+    private volatile int currentMethodId;
+
+    @Getter
+    private ChannelHandlerContext ctx;
     
     @Override
     public void receiveConnectionStartOk(FieldTable clientProperties, AMQShortString mechanism, byte[] response, AMQShortString locale) {
-        
+        // unfinished
+        ConnectionTuneBody tuneBody = registry.createConnectionTuneBody(200, 100000L, 100);
+        writeFrame(tuneBody.generateFrame(0));
     }
 
     @Override
     public void receiveConnectionSecureOk(byte[] response) {
-
+        // unfinished
+        ConnectionTuneBody tuneBody = registry.createConnectionTuneBody(200, 100000L, 100);
+        writeFrame(tuneBody.generateFrame(0));
     }
 
     @Override
@@ -51,22 +80,25 @@ public class AmqpConnection extends AmqpCommandDecoder implements ServerMethodPr
 
     @Override
     public void receiveConnectionOpen(AMQShortString virtualHost, AMQShortString capabilities, boolean insist) {
-
+        AMQMethodBody responseBody = registry.createConnectionOpenOkBody(virtualHost);
+        writeFrame(responseBody.generateFrame(0));
     }
 
     @Override
     public void receiveChannelOpen(int channelId) {
-
+        ChannelOpenOkBody response = registry.createChannelOpenOkBody();
+        addChannel(new AmqpChannel(this, channelId));
+        writeFrame(response.generateFrame(channelId));
     }
 
     @Override
     public ProtocolVersion getProtocolVersion() {
-        return null;
+        return AmqpConstants.PROTOCOL_VERSION;
     }
 
     @Override
     public ServerChannelMethodProcessor getChannelMethodProcessor(int channelId) {
-        return null;
+        return getChannel(channelId);
     }
 
     @Override
@@ -76,7 +108,7 @@ public class AmqpConnection extends AmqpCommandDecoder implements ServerMethodPr
 
     @Override
     public void receiveConnectionCloseOk() {
-
+        
     }
 
     @Override
@@ -86,12 +118,34 @@ public class AmqpConnection extends AmqpCommandDecoder implements ServerMethodPr
 
     @Override
     public void receiveProtocolHeader(ProtocolInitiation protocolInitiation) {
-
+        ProtocolVersion protocolVersion = AmqpConstants.PROTOCOL_VERSION;
+        brokerDecoder.setExpectProtocolInitiation(false);
+        try {
+            ProtocolVersion pv = protocolInitiation.checkVersion();
+            AMQMethodBody responseBody = registry.createConnectionStartBody(
+                protocolVersion.getMajorVersion(),
+                pv.getActualMinorVersion(),
+                null,
+                "PLAIN token".getBytes(US_ASCII),
+                "en_US".getBytes(US_ASCII));
+            writeFrame(responseBody.generateFrame(0));
+        } catch (AMQProtocolHeaderException e) {
+            log.info("Received unsupported protocol initiation for protocol version: {}, {}", getProtocolVersion(), e.getMessage());
+            writeFrame(new ProtocolInitiation(ProtocolVersion.v0_91));
+            e.printStackTrace();
+            throw e;
+        } catch (Exception e) {
+            log.info("Received unsupported protocol initiation for protocol version: {}, {}", getProtocolVersion(), e.getMessage());
+            writeFrame(new ProtocolInitiation(ProtocolVersion.v0_91));
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void setCurrentMethod(int classId, int methodId) {
-
+        this.currentClassId = classId;
+        this.currentMethodId = methodId;
     }
 
     @Override
@@ -102,6 +156,7 @@ public class AmqpConnection extends AmqpCommandDecoder implements ServerMethodPr
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
+        this.ctx = ctx;
         this.brokerDecoder = new AmqpBrokerDecoder(this);
     }
 
@@ -119,5 +174,22 @@ public class AmqpConnection extends AmqpCommandDecoder implements ServerMethodPr
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws AMQFrameDecodingException, IOException {
         ByteBuf buffer = (ByteBuf) msg;
         brokerDecoder.decodeBuffer(QpidByteBuffer.wrap(buffer.nioBuffer()));
+    }
+
+    public void writeFrame(AMQDataBlock frame) {
+        final ChannelFuture future = getCtx().writeAndFlush(frame);
+        future.addListener(f -> {});
+    }
+
+    private void addChannel(AmqpChannel channel) {
+        this.channels.put(channel.channelId, channel);
+    }
+
+    public AmqpChannel getChannel(int channelId) {
+        return channels.get(channelId);
+    }
+
+    public MethodRegistry getRegistry() {
+        return registry;
     }
 }

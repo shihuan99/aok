@@ -32,7 +32,7 @@ import java.util.concurrent.CountDownLatch;
 @Slf4j
 public class Broker {
 
-    private CountDownLatch shutdownLatch = new CountDownLatch(1);
+    private final CountDownLatch shutdownLatch = new CountDownLatch(1);
     
     public void awaitShutdown() throws InterruptedException {
         shutdownLatch.await();
@@ -48,7 +48,7 @@ public class Broker {
             .option(ChannelOption.SO_REUSEADDR, true)
             .childOption(ChannelOption.SO_KEEPALIVE, false)
             .childOption(ChannelOption.TCP_NODELAY, true)
-            .localAddress(new InetSocketAddress("0.0.0.0", 5673))
+            .localAddress(new InetSocketAddress("localhost", 5674))
             .childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel socketChannel) {
@@ -58,7 +58,7 @@ public class Broker {
                 }
             });
             try {
-                serverBootstrap.bind().sync();
+                serverBootstrap.bind(5674).sync();
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);

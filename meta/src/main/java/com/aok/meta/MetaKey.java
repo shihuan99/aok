@@ -1,5 +1,7 @@
 package com.aok.meta;
 
+import java.util.Objects;
+
 public class MetaKey {
 
     private final String type;

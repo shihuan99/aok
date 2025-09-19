@@ -14,7 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.aok.meta;
+package com.aok.core;
 
-public enum ExchangeType {
+import io.netty.channel.ChannelInboundHandlerAdapter;
+
+
+public class AmqpCommandDecoder extends ChannelInboundHandlerAdapter {
+    
 }

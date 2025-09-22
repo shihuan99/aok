@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration monitorInterval="30">
+  <Properties>
+    <Property name="log.dateformat">yyyy-MM-dd HH:mm:ss.SSSZ</Property>
+  </Properties>
+  <Appenders>
+    <Console name="CONSOLE" target="SYSTEM_OUT">
+      <PatternLayout pattern="[%d{${log.dateformat}}] [%t] [%-5p] [%c{2.}.%M %L] %m{CRLF}%n"/>
+    </Console>
+  </Appenders>
+
+  <Loggers>
+    <root level="info">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </Loggers>
+</Configuration>

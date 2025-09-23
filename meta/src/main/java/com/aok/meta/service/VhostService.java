@@ -14,18 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.aok.meta;
+package com.aok.meta.service;
 
-import lombok.Data;
+import com.aok.meta.Vhost;
+import com.aok.meta.container.MetaContainer;
 
-import java.io.Serializable;
+import java.util.List;
 
-@Data
-public class Meta implements Serializable {
-    
-    //TODO add uuid scope
+public class VhostService {
 
-    private String vhost;
-    
-    private String name;
+    private final MetaContainer<Vhost> metaContainer;
+
+    VhostService(MetaContainer<Vhost> metaContainer) {
+        this.metaContainer = metaContainer;
+    }
+
+    public Vhost addVhost(String name) {
+        Vhost vhost = new Vhost(name);
+        return (Vhost) metaContainer.add(vhost);
+    }
+
+    public Vhost deleteVhost(Vhost vhost) {
+        return (Vhost) metaContainer.delete(vhost);
+    }
+
+    public List<Vhost> listVhost() {
+        return metaContainer.list(Vhost.class);
+    }
+
+    public int size() {
+        return metaContainer.size(Vhost.class);
+    }
 }

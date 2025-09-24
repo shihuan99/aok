@@ -41,5 +41,5 @@ public class Exchange extends Meta {
 
     private boolean internal;
 
-    private HashMap<String, String> arguments;
+    private HashMap<String, Object> arguments;
 }

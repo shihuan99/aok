@@ -21,8 +21,6 @@ package com.aok.core;
 import org.apache.qpid.server.bytebuffer.QpidByteBuffer;
 import org.apache.qpid.server.transport.ByteBufferSender;
 
-import java.nio.ByteBuffer;
-
 public class SimpleEncodeBufferSender implements ByteBufferSender {
 
     private final QpidByteBuffer byteBuffer;

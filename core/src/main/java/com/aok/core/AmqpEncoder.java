@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.qpid.server.bytebuffer.QpidByteBuffer;
 import org.apache.qpid.server.protocol.v0_8.transport.AMQDataBlock;
 
-import java.nio.ByteBuffer;
-
 @Slf4j
 public class AmqpEncoder extends MessageToByteEncoder<AMQDataBlock> {
 

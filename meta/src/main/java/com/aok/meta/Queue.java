@@ -19,18 +19,18 @@ package com.aok.meta;
 import lombok.Data;
 
 import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @MetaType("queue")
 public class Queue extends Meta {
     
-    public Queue(String vhost, String name, Boolean exclusive, Boolean autoDelete, Boolean durable, Boolean internal, HashMap<String, String> arguments) {
+    public Queue(String vhost, String name, Boolean exclusive, Boolean autoDelete, Boolean durable, Map<String, Object> arguments) {
         this.setVhost(vhost);
         this.setName(name);
         this.exclusive = exclusive;
         this.autoDelete = autoDelete;
         this.durable = durable;
-        this.internal = internal;
         this.arguments = arguments;
     }
     
@@ -40,7 +40,5 @@ public class Queue extends Meta {
     
     private Boolean autoDelete;
     
-    private Boolean internal;
-    
-    private HashMap<String, String> arguments;
+    private Map<String, Object> arguments;
 }

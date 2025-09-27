@@ -14,27 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.aok.meta;
+package com.aok.core.storage;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.aok.core.storage.message.Message;
 
-@Data
-@MetaType("binding")
-@AllArgsConstructor
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Binding extends Meta {
+public class ProduceService {
 
-    private String source;
+    private final IStorage storage;
 
-    private String destination;
+    public ProduceService(IStorage storage) {
+        this.storage = storage;
+    }
 
-    private String routingKey;
-
-    public String getMetaType() {
-        return "binding";
+    public void produce(Message message) {
+        storage.produce(message);
     }
 }

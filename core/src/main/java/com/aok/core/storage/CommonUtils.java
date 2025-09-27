@@ -14,27 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.aok.meta;
+package com.aok.core.storage;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public class CommonUtils {
 
-@Data
-@MetaType("binding")
-@AllArgsConstructor
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Binding extends Meta {
-
-    private String source;
-
-    private String destination;
-
-    private String routingKey;
-
-    public String getMetaType() {
-        return "binding";
+    public static String generateKey(String vhost, String name) {
+        return vhost + "_" + name;
     }
 }

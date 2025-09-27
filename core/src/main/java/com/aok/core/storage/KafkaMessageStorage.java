@@ -14,27 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.aok.meta;
+package com.aok.core.storage;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.aok.core.storage.message.Message;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
-@Data
-@MetaType("binding")
-@AllArgsConstructor
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Binding extends Meta {
+public class KafkaMessageStorage implements IStorage {
 
-    private String source;
+    private final ProducerPool producerPool;
 
-    private String destination;
+    public KafkaMessageStorage(ProducerPool producerPool) {
+        this.producerPool = producerPool;
+    }
 
-    private String routingKey;
-
-    public String getMetaType() {
-        return "binding";
+    @Override
+    public void produce(Message message) {
+        String key = CommonUtils.generateKey(message.getVhost(), message.getQueue());
+        Producer<String, Message> producer = producerPool.getProducer(key);
+        ProducerRecord<String, Message> record = new ProducerRecord<>(key,message);
+        producer.send(record);
     }
 }

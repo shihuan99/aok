@@ -14,27 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.aok.meta;
+package com.aok.meta.serialization;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.aok.meta.MetaKey;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.serialization.Serializer;
 
-@Data
-@MetaType("binding")
-@AllArgsConstructor
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Binding extends Meta {
+public class MetaKeySerializer implements Serializer<MetaKey> {
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private String source;
-
-    private String destination;
-
-    private String routingKey;
-
-    public String getMetaType() {
-        return "binding";
+    @Override
+    public byte[] serialize(String topic, MetaKey data) {
+        if (data == null) return null;
+        try {
+            return objectMapper.writeValueAsBytes(data);
+        } catch (Exception e) {
+            throw new RuntimeException("MetaKey serialization failed", e);
+        }
     }
 }
+

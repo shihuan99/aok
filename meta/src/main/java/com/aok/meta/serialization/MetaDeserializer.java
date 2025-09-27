@@ -14,27 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.aok.meta;
+package com.aok.meta.serialization;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.aok.meta.Meta;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.serialization.Deserializer;
+import java.util.Map;
 
-@Data
-@MetaType("binding")
-@AllArgsConstructor
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Binding extends Meta {
+public class MetaDeserializer implements Deserializer<Meta> {
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private String source;
+    @Override
+    public void configure(Map<String, ?> configs, boolean isKey) {}
 
-    private String destination;
-
-    private String routingKey;
-
-    public String getMetaType() {
-        return "binding";
+    @Override
+    public Meta deserialize(String topic, byte[] data) {
+        if (data == null || data.length == 0) return null;
+        try {
+            return objectMapper.readValue(data, Meta.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Meta deserialization failed", e);
+        }
     }
+
+    @Override
+    public void close() {}
 }
+

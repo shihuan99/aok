@@ -1,0 +1,42 @@
+{
+  "name": "MyBroker",
+  "modelVersion": "2.0",
+  "defaultVirtualHost": "default",
+  "authenticationProviders": [
+    {
+      "name": "plain",
+      "type": "Plain",
+      "secureOnlyMechanisms": [],
+      "users": [
+        {
+          "name": "guest",
+          "password": "guest",
+          "type": "managed"
+        }
+      ]
+    }
+  ],
+  "ports": [
+    {
+      "name": "AMQP",
+      "port": 5672,
+      "authenticationProvider": "plain",
+      "virtualHosts": ["default"]
+    }
+  ],
+  "virtualHosts": [
+    {
+      "name": "default",
+      "type": "Memory",
+      "storePath": "${qpid.work_dir}/derby/default",
+      "housekeepingCheckPeriod": "5000",
+      "virtualHostNodes": [
+        {
+          "name": "default",
+          "type": "Memory",
+          "storePath": "${qpid.work_dir}/derby/default"
+        }
+      ]
+    }
+  ]
+}
